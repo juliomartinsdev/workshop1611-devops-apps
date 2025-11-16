@@ -27,7 +27,7 @@ jobs:
           uses: aws-actions/configure-aws-credentials@v5.1.0
           with:
             aws-region: us-east-1
-            rele-to-assume: arn:aws:iam::858431073453:role/workshop-devops-github-role
+            role-to-assume: arn:aws:iam::858431073453:role/workshop-devops-github-role
 
         - name: Login ECR
           id: login-ecr
