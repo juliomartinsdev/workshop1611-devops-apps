@@ -1,0 +1,57 @@
+name: Backend Pipeline
+
+on:
+    workflow_dispatch:
+    push:
+        branches:
+        - main
+        paths:
+        - 'backend/**'
+env:
+  BACKEND_REPOSITORY: workshop-devops/prod/backend
+  IMAGE_TAG: ${{ github.sha }}
+
+permissions:
+    contents: read
+    id-token: write
+
+jobs:
+    backend-job:
+        name: Backend Job
+        runs-on: ubuntu-latest
+
+        steps:
+        - uses: actions/checkout@v5
+
+        - name: Configure AWS Credentials
+          uses: aws-actions/configure-aws-credentials@v5.1.0
+          with:
+            aws-region: us-east-1
+            rele-to-assume: arn:aws:iam::858431073453:role/workshop-devops-github-role
+
+        - name: Login ECR
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v2
+
+        - name: Build and Push
+          env:
+            REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          run: |
+            docker build -f ./backend/YoutubeLiveApp/Dockerfile -t $REGISTRY/$BACKEND_REPOSITORY:$IMAGE_TAG ./backend/YoutubeLiveApp
+            docker push $REGISTRY/$BACKEND_REPOSITORY/$IMAGE_TAG
+
+        - uses: actions/checkout@v5
+          with:
+            repository: juliomartinsdev/workshop1611-devops-gitops
+            token: ${{ secrets.PAT }}
+
+        - name: Kustomize Edit Set Image
+          env:
+            REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          run: |
+            kustomize edit set image $REGISTRY/$BACKEND_REPOSITORY=$REGISTRY/$BACKEND_REPOSITORY:$IMAGE_TAG
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add ./kustomization.yml
+            git commit -m "[BOT] Updated Image to $REGISTRY/$BACKEND_REPOSITORY:$IMAGE_TAG"
+            git push
