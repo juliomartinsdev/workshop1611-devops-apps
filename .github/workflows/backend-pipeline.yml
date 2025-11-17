@@ -38,7 +38,7 @@ jobs:
             REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           run: |
             docker build -f ./backend/YoutubeLiveApp/Dockerfile -t $REGISTRY/$BACKEND_REPOSITORY:$IMAGE_TAG ./backend/YoutubeLiveApp
-            docker push $REGISTRY/$BACKEND_REPOSITORY/$IMAGE_TAG
+            docker push $REGISTRY/$BACKEND_REPOSITORY:$IMAGE_TAG
 
         - uses: actions/checkout@v5
           with:
